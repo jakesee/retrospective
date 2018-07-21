@@ -16,14 +16,14 @@ export class ChatComponent implements OnInit {
   }
 
   ngOnInit() {
-    this._socket = io("http://localhost:3000");
+    this._socket = io();
     this._socket.on('ping-reply', (message) => {
       this.messages.push(message);
     });
   }
 
   ping() {
-    this._socket.emit('new-message', 'hello world');
+    this._socket.emit('new-message', 'hello world xx');
     console.log('ping');
   }
 
