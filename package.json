@@ -4,12 +4,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng build && tsc && cd dist/out-tsc/src/ && node server.js",
-    "build": "ng build",
+    "start": "cd dist/out-tsc/src/ && node server.js",
+    "build": "ng build && tsc",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "debug": "cd dist/out-tsc/src/ && node server.js"
+    "postinstall": "ng build && tsc"
   },
   "private": true,
   "dependencies": {
