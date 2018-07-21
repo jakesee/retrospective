@@ -9,7 +9,6 @@ import { AppComponent } from './app.component';
 import { UserComponent } from './components/user/user.component';
 
 import { DataService } from './services/data.service';
-import { Websocket } from './services/Websocket.service';
 import { AboutComponent } from './components/about/about.component';
 import { StartStopContinueBoardComponent } from './components/start-stop-continue-board/start-stop-continue-board.component';
 import { HostComponent } from './components/host/host.component';
@@ -36,8 +35,7 @@ const appRoutes:Routes = [
     DragulaModule
   ],
   providers: [ // services 
-    DataService,
-    Websocket
+    DataService
   ], 
   bootstrap: [AppComponent] // startup component
 })
