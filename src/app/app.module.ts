@@ -12,7 +12,8 @@ import { DataService } from './services/data.service';
 import { AboutComponent } from './components/about/about.component';
 import { StartStopContinueBoardComponent } from './components/start-stop-continue-board/start-stop-continue-board.component';
 import { HostComponent } from './components/host/host.component';
-import { ChatComponent } from './components/chat/chat.component'
+import { ChatComponent } from './components/chat/chat.component';
+import { SetupComponent } from './components/setup/setup.component'
 
 
 const appRoutes:Routes = [
@@ -25,7 +26,7 @@ const appRoutes:Routes = [
 
 @NgModule({
   declarations: [ // components
-    AppComponent, UserComponent, AboutComponent, StartStopContinueBoardComponent, HostComponent, ChatComponent
+    AppComponent, UserComponent, AboutComponent, StartStopContinueBoardComponent, HostComponent, ChatComponent, SetupComponent
   ],
   imports: [ // modules
     BrowserModule,

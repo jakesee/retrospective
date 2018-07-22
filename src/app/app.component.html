@@ -1,8 +1,23 @@
-<ul>
-  <li><a routerLink="/">User</a></li>
-  <li><a routerLink="/about">About</a></li>
-  <li><a routerLink="/start-stop-continue-board">start-stop-continue-board</a></li>
-  <li><a routerLink="/chat">Chat</a></li>
-</ul>
-<router-outlet></router-outlet>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <nav>
+      <ul>
+        <li><a routerLink="/">User</a></li>
+        <li><a routerLink="/about">About</a></li>
+        <li><a routerLink="/start-stop-continue-board">start-stop-continue-board</a></li>
+        <li><a routerLink="/chat">Chat</a></li>
+      </ul>
+  </nav>
+  <div>
+    <router-outlet></router-outlet>
+  </div>
+</body>
+</html>
 

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { DataService } from '../../services/data.service';
 import * as uuid from 'uuid/v1';
-import * as io from 'socket.io-client';
+import { WebsocketService } from '../../services/websocket.service';
 
 @Component({
   selector: 'app-start-stop-continue-board',
@@ -23,17 +23,13 @@ export class StartStopContinueBoardComponent implements OnInit {
     continue:Note[]
   }
 
-  socket:any;
-
-  constructor(private dataService:DataService) {
+  constructor(private _ws:WebsocketService) {
     this.who = uuid();
     this.notes = {
       start: Array(),
       stop: Array(),
       continue: Array(),
     };
-
-    this.setupSocket();
   }
 
   ngOnInit() {
@@ -42,19 +38,8 @@ export class StartStopContinueBoardComponent implements OnInit {
     this.notes['continue'].push(new Note(uuid(), uuid(), 'continue', 'why you so like continue', Array()));
   }
 
-
-  setupSocket() {
-    this.socket = io();
-
-    this.socket.on('ADD', (data) => {
-      var note = new Note(data.id, data.who, data.title, data.body, data.votes);
-      this.notes[data.where].push();
-    });
-  }
-
-
   createNote(where:string) {
-    this.dataService.addNote(where, this.who).subscribe(res => {
+    this._ws.addNote(where, this.who).subscribe(res => {
       let result = JSON.parse(res);
       let note = result.info;
     });
