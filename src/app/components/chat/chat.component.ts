@@ -16,7 +16,7 @@ export class ChatComponent implements OnInit {
   }
 
   ngOnInit() {
-    this._socket = io();
+    
     this._socket.on('ping-reply', (message) => {
       this.messages.push(message);
     });

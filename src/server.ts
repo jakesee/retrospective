@@ -6,7 +6,7 @@ import * as BodyParser from 'body-parser';
 
 class ApiServer {
     private _express:express.Application;
-    private _io:Socket;
+    private _io;
     private _http;
     PORT = process.env.PORT || 8000;
 
@@ -34,9 +34,19 @@ class ApiServer {
                 console.log('disconnected');
             });
 
-            client.on('new-message', (data) => {
-                console.log('new-message');
-                client.emit('ping-reply', data, Date.now());
+            client.on('MSG', (data) => {
+                console.log('MSG');
+                client.emit('MSG', data);
+            });
+
+            client.on('JOIN', (data) => {
+                console.log('JOIN', data);
+                client.emit('MSG', data);
+            });
+
+            client.on('HOST', (data) => {
+                console.log('HOST', data);
+                client.emit('MSG', data);
             });
         });  
     }

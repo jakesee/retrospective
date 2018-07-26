@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { DataService } from '../../services/data.service';
 import * as uuid from 'uuid/v1';
 import { WebsocketService } from '../../services/websocket.service';
 
@@ -33,16 +32,13 @@ export class StartStopContinueBoardComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.notes['start'].push(new Note(uuid(), uuid(), 'start', 'why you so like start', Array()));
-    this.notes['stop'].push(new Note(uuid(), uuid(), 'stop', 'why you so like stop', Array()));
-    this.notes['continue'].push(new Note(uuid(), uuid(), 'continue', 'why you so like continue', Array()));
+    
   }
 
+
+
   createNote(where:string) {
-    this._ws.addNote(where, this.who).subscribe(res => {
-      let result = JSON.parse(res);
-      let note = result.info;
-    });
+   
   }
 
   editBody(note:Note) {

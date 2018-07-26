@@ -14,6 +14,7 @@ import { StartStopContinueBoardComponent } from './components/start-stop-continu
 import { HostComponent } from './components/host/host.component';
 import { ChatComponent } from './components/chat/chat.component';
 import { SetupComponent } from './components/setup/setup.component'
+import { WebsocketService } from './services/websocket.service';
 
 
 const appRoutes:Routes = [
@@ -21,12 +22,19 @@ const appRoutes:Routes = [
   { path: 'about', component:AboutComponent },
   { path: 'start-stop-continue-board', component:StartStopContinueBoardComponent },
   { path: 'chat', component:ChatComponent },
+  { path: 'setup', component:SetupComponent },
 ]
 
 
 @NgModule({
   declarations: [ // components
-    AppComponent, UserComponent, AboutComponent, StartStopContinueBoardComponent, HostComponent, ChatComponent, SetupComponent
+    AppComponent,
+    UserComponent,
+    AboutComponent,
+    StartStopContinueBoardComponent,
+    HostComponent,
+    ChatComponent,
+    SetupComponent
   ],
   imports: [ // modules
     BrowserModule,
@@ -36,7 +44,8 @@ const appRoutes:Routes = [
     DragulaModule
   ],
   providers: [ // services 
-    DataService
+    DataService,
+    WebsocketService
   ], 
   bootstrap: [AppComponent] // startup component
 })
