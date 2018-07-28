@@ -1,0 +1,10 @@
+<div>
+  <div>
+    <h1>Enter Room</h1>
+    <form (submit)="join(room.value)">
+      <input type="text" #room>
+      <button (click)="join(room.value)">Join</button>
+      <button (click)="host(room.value)">Host</button>
+    </form>
+  </div>
+</div>
