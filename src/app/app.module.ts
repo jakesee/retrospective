@@ -18,11 +18,11 @@ import { WebsocketService } from './services/websocket.service';
 
 
 const appRoutes:Routes = [
-  { path: '', component:UserComponent },
+  { path: '', component:SetupComponent },
   { path: 'about', component:AboutComponent },
   { path: 'start-stop-continue-board', component:StartStopContinueBoardComponent },
   { path: 'chat', component:ChatComponent },
-  { path: 'setup', component:SetupComponent },
+  { path: 'User', component:UserComponent },
 ]
 
 

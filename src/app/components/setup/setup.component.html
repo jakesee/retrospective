@@ -1,10 +1,15 @@
 <div>
   <div>
     <h1>Enter Room</h1>
-    <form (submit)="join(room.value)">
-      <input type="text" #room>
-      <button (click)="join(room.value)">Join</button>
-      <button (click)="host(room.value)">Host</button>
+    <form (submit)="join(iRoom.value)">
+      <input type="text" #iRoom>
+      <button (click)="join(iRoom.value)">Join</button>
+      <button (click)="host(iRoom.value)">Host</button>
     </form>
   </div>
 </div>
+
+<button (click)="getRooms()">send something!</button>
+<ul>
+  <li *ngFor="let room of availableRooms">{{room}}</li>
+</ul>
