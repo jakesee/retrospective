@@ -12,6 +12,7 @@ export class WebsocketService {
   private _id:number;
   private _room:string;
   private _isHost:boolean = false;
+  private _nickname:string = 'Anonymous';
 
   constructor() {
     this._socket = io();
@@ -35,7 +36,8 @@ export class WebsocketService {
       this._socket.emit('server', {
         type: 'host',
         request: {
-          room: room
+          room: room,
+          nickname: this._nickname
         }
       }, (msg:any) => {
         // record the registration info if successful

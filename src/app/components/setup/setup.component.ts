@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { WebsocketService } from '../../services/websocket.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-setup',
@@ -10,7 +11,7 @@ export class SetupComponent implements OnInit {
 
   public availableRooms:[string];
 
-  constructor(private _ws:WebsocketService) {
+  constructor(private _ws:WebsocketService, private _router:Router) {
     
   }
 
@@ -24,25 +25,18 @@ export class SetupComponent implements OnInit {
     console.log('_onApplicationMessages', msg);
   }
 
-  public join(room:string) {
+  public join(room:string, nickname:string) {
     this._ws.joinRoom(room, (msg) => {
-      console.log("this._ws.joinRoom", room, msg.response.result);
-      this.getRooms();
+      if(msg.response.result) {
+        this._router.navigateByUrl('/start-stop-continue-board');
+      }
     });
   }
 
-  public host(room:string) {
+  public host(room:string, nickname:string) {
     this._ws.hostRoom(room, (msg) => {
-      console.log("this._ws.hostRoom", room, msg.response.result);
-      this.getRooms();
-    });
-  }
- 
-  public getRooms() {
-    this._ws.getRooms((msg) => {
       if(msg.response.result) {
-        this.availableRooms = msg.response.rooms;
-        console.log('component.getRooms', this.availableRooms);
+        this._router.navigateByUrl('/start-stop-continue-board');
       }
     });
   }

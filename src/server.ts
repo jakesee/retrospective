@@ -3,10 +3,6 @@ import * as Socket from 'socket.io';
 import * as http from 'http';
 import { Board } from './api/board'
 import * as BodyParser from 'body-parser';
-import * as uuid from 'uuid';
-import { ValueSansProvider } from '../node_modules/@angular/core/src/di/provider';
-import { NullAstVisitor } from '../node_modules/@angular/compiler';
-import { Server } from 'net';
 
 class ApiServer {
     private _express:express.Application;
@@ -75,7 +71,31 @@ class ApiServer {
 
     private _onApplicationEvent(client:Socket.Socket, msg:any, ack:(msg:any)=>void = null):void {
         // application events forward to everyone in the specified room for now
+        msg.response = null;
+        if(msg.type == 'add') {
+            msg.response = this._respondAdd(client, msg);
+        } else if(msg.type == 'edit.start') {
+            msg.response = this._respondStart(client, msg);
+        } else if(msg.type == 'edit.end') {
+            msg.response = this._respondEdit(client, msg);
+        } else if(msg.type == 'upvote') {
+            msg.response = this._respondUpvote(client, msg);
+        } else if(msg.type == 'downvote') {
+            msg.response = this._respondDownvote(client, msg);
+        }
+
+        if(ack) ack(msg);
+
         this._io.to(msg.room).emit('application', msg);
+    }
+
+    private _respondAdd(client:Socket.Socket, msg:any) {
+        var response = {
+            id: uuid(),
+            vote: 0,
+            timestamp: + new Date(),
+            rank: 
+        }
     }
 
     private _onServerEvent(client:Socket.Socket, msg:any, ack:(msg:any)=>void = null):void {

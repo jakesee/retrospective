@@ -1,0 +1,19 @@
+nav {
+    background-color: #00374E;
+}
+nav > ul > li {
+    display: inline-block;
+    padding: 10px;
+    color: white;
+}
+nav > ul > li > a:link,
+nav > ul > li > a:active,
+nav > ul > li > a:hover,
+nav > ul > li > a:visited {
+    color: white;
+    text-decoration: none;
+}
+
+div#content {
+    margin: 0 auto;
+}

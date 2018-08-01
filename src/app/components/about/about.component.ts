@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'app-about',
@@ -7,9 +8,17 @@ import { Component, OnInit } from '@angular/core';
 })
 export class AboutComponent implements OnInit {
 
-  constructor() { }
+  constructor(private _ds:DataService) { }
 
   ngOnInit() {
+  }
+
+  public update() {
+    this._ds.updateDate();
+  }
+
+  public getDataService() {
+    return this._ds;
   }
 
 }

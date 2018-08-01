@@ -1,10 +1,12 @@
 import * as uuid from 'uuid/v1';
+import * as _ from 'lodash';
+import * as crypto from 'crypto';
 
 export class Board {
     
-    start:Note[] = Array();
-    stop:Note[] = Array();
-    continue:Note[] = Array();
+    public start:Note[] = Array();
+    public stop:Note[] = Array();
+    public continue:Note[] = Array();
 
     constructor() {
         
@@ -51,21 +53,69 @@ export class Board {
     updateNote(where, note:Note) {
 
     }
+
+    public hash() {
+        var all = _.concat(this.start, this.stop, this.continue);
+        var hash = crypto.createHash('sha256');
+        for(var i = 0; i < all.length; i++) {
+            hash.update(all[i].id + all[i].owner + all[i].votes + all[i].timestamp);
+        }
+        return hash.digest('hex');
+    }
+
+    public sort() {
+        
+      
+    }
+}
+
+class Column {
+
+    public notes:Note[] = Array();
+
+    constructor() {
+     
+    }
+
+    public addNote(owner:string) {
+        this.notes.push(new Note(owner));
+    }
+
+    public updateNote(id:string, data:any) {
+        for(var i = 0; i < this.notes.length; i++) {
+            if(this.notes[i].id === id) {
+                this.notes[i].title = data.title;
+                this.notes[i].body = data.body;
+            }
+        }
+    }
+
+    public deleteNote(id:string) {
+        _.remove(this.notes, (o) => {
+            return o.id == id;
+        });
+    }
+
+    public sort() {
+        _.sortBy(this.notes, ['votes', 'timestamp']);
+    }
 }
 
 class Note {
     title:string;
     body:string;
     id:string; //uuid
-    who:string; // uuid
-    votes:string[]; // uuids
+    owner:string; // uuid
+    votes:string[]; // owner uuids
+    timestamp:number;
 
-    constructor(who:string) {
+    constructor(owner:string) {
         this.id = uuid();
-        this.who = who;
+        this.owner = owner;
         this.votes = Array();
 
         this.title = 'What is this about?';
         this.body = 'What do you say...?';
+        this.timestamp = +new Date();
     }
 }
