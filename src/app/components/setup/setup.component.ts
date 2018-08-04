@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { WebsocketService } from '../../services/websocket.service';
 import { Router } from '@angular/router';
+import * as S from '../../models/server.contract';
+import * as A from '../../models/application.contract';
 
 @Component({
   selector: 'app-setup',
@@ -16,28 +18,33 @@ export class SetupComponent implements OnInit {
   }
 
   ngOnInit() {
-    this._ws.getApplicationMessages().subscribe((msg) => {
-      this._onApplicationMessages(msg);
+    this._ws.getApplicationMessages().subscribe((response) => {
+      this._onApplicationMessages(response);
     });
   }
 
-  private _onApplicationMessages(msg:any) {
-    console.log('_onApplicationMessages', msg);
+  private _onApplicationMessages(response:A.ApplicationResponse) {
+    console.log('_onApplicationMessages', response);
   }
 
   public join(room:string, nickname:string) {
-    this._ws.joinRoom(room, (msg) => {
-      if(msg.response.result) {
-        this._router.navigateByUrl('/start-stop-continue-board');
+    this._ws.joinRoom(room, (response) => {
+      console.log(response);
+      if(response.result) {
+        //this._router.navigateByUrl('/start-stop-continue-board');
       }
     });
+    return false;
   }
 
   public host(room:string, nickname:string) {
-    this._ws.hostRoom(room, (msg) => {
-      if(msg.response.result) {
-        this._router.navigateByUrl('/start-stop-continue-board');
+    console.log(room, nickname);
+    this._ws.hostRoom(room, (response) => {
+      console.log(response);
+      if(response.result) {
+        //this._router.navigateByUrl('/start-stop-continue-board');
       }
     });
+    return false;
   }
 }

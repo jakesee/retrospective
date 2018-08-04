@@ -1,17 +1,27 @@
 import * as express from 'express';
 import * as Socket from 'socket.io';
 import * as http from 'http';
-import { Board } from './api/board'
 import * as BodyParser from 'body-parser';
+import * as uuid from 'uuid';
+import * as A from './app/models/application.contract';
+import * as S from './app/models/server.contract';
+import * as _ from 'lodash';
+import { Result } from '../node_modules/@types/range-parser';
+
+
+class Room {
+    host:string;
+    participants:string[] = [];
+}
 
 class ApiServer {
     private _express:express.Application;
     private _io:Socket.Server;
     private _http;
     PORT = process.env.PORT || 8000;
-    private _hosts:any = {};
+    private _rooms:{[key:string]:Room} = {};
 
-    board:Board = new Board();
+    private _board:A.Board = new A.Board();
 
     constructor() {
         // basic express and socket.io initialisation
@@ -21,7 +31,6 @@ class ApiServer {
 
         // express setup
         this._setupMiddlewares();
-        this._setupRoutes();
 
         // socket io stuff
         this._http.listen(this.PORT, () => {
@@ -37,13 +46,15 @@ class ApiServer {
 
             client.on('application', (msg:any, ack:(msg:any)=>void = null) => {
                 console.log('application');
-                this._onApplicationEvent(client, msg, ack);
+                this._onApplicationRequest(client, msg, ack);
             });
 
             client.on('server', (msg:any, ack:(msg:any)=>void = null) => {
                 console.log('server');
-                this._onServerEvent(client, msg, ack);
+                this._onServerRequest(client, msg, ack);
             });
+
+            this._registerConnection(client);
         });  
     }
 
@@ -53,74 +64,88 @@ class ApiServer {
         this._express.use(BodyParser.urlencoded({ extended: true})); // support encoded bodies
     }
 
-    private _setupRoutes() {
-        // set up the API stuff here
-        this._express.get('/api/notes', (req, res) => {
-            res.json({ title: 'xxx' });
-        });
-
-        this._express.post('/api/note/create', (req, res) => {
-            var where = req.body.where;
-            var who = req.body.who;
-            var result = this.board.createNote(where, who);
-            if(result.success === true) {
-                this._io.emit('ADD', result.data);
-            }
-        });
+    private _registerConnection(client:Socket.Socket) {
+        var response = new S.ServerResponse(new S.ServerRequest(null, S.ServerTopic.Connect, null));
+        response.succeed(new S.ConnectResponse(uuid()));
+        client.emit('server', response);
     }
 
-    private _onApplicationEvent(client:Socket.Socket, msg:any, ack:(msg:any)=>void = null):void {
+    private _onApplicationRequest(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
         // application events forward to everyone in the specified room for now
-        msg.response = null;
-        if(msg.type == 'add') {
-            msg.response = this._respondAdd(client, msg);
-        } else if(msg.type == 'edit.start') {
-            msg.response = this._respondStart(client, msg);
-        } else if(msg.type == 'edit.end') {
-            msg.response = this._respondEdit(client, msg);
-        } else if(msg.type == 'upvote') {
-            msg.response = this._respondUpvote(client, msg);
-        } else if(msg.type == 'downvote') {
-            msg.response = this._respondDownvote(client, msg);
-        }
-
-        if(ack) ack(msg);
-
-        this._io.to(msg.room).emit('application', msg);
-    }
-
-    private _respondAdd(client:Socket.Socket, msg:any) {
-        var response = {
-            id: uuid(),
-            vote: 0,
-            timestamp: + new Date(),
-            rank: 
+        var response:A.ApplicationResponse = null;
+        if(request.topic == A.Topic.AddNote) {
+            this._processAddNote(client, request, ack);
+        } else if(request.topic == A.Topic.DeleteNote) {
+            this._processDeleteNote(client, request);
+        } else if(request.topic == A.Topic.UpdateNote) {
+            this._processUpdateNote(client, request);
+        } else if(request.topic == A.Topic.UpvoteNote) {
+            this._processUpvote(client, request);
+        } else if(request.topic == A.Topic.DownvoteNote) {
+            this._processDownvote(client, request);
         }
     }
 
-    private _onServerEvent(client:Socket.Socket, msg:any, ack:(msg:any)=>void = null):void {
-        msg.response = null;
-        if(msg.type == 'join') {
-            console.log('server.event.join');
-            msg.response = this._respondJoinRoom(client, msg);
-        } else if(msg.type == 'host') {
-            console.log('server.event.host');
-            msg.response = this._respondHostRoom(client, msg);
-        } else if(msg.type == 'room') {
-            console.log('server.event.room');
-            msg.response = this._respondGetRooms(client, msg);            
-        } else if(msg.type == 'leave') {
-            console.log('server.event.leave');
-            msg.response = this._respondLeaveRoom(client, msg);
-        }
-
-        if(ack) ack(msg);
-
-        client.emit('server', msg);
+    private _processAddNote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
+        var param:A.AddNoteRequest = request.param as A.AddNoteRequest;
+        var note:A.Note = A.BoardManager.addNote(this._board, param);
+        var response = new A.ApplicationResponse(request);
+        response.success(note);
+        this._emitApplicationResponse(request, response, ack);
     }
 
-    private _getAllRooms() {
-        var userRooms = [];
+    private _processDeleteNote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
+        var param:A.DeleteNoteRequest = request.param as A.DeleteNoteRequest;
+        A.BoardManager.deleteNote(this._board, param);
+        var response = new A.ApplicationResponse(request);
+        response.success(new A.DeleteNoteResponse(param.owner, param.noteId));
+        this._emitApplicationResponse(request, response, ack);
+    }
+
+    private _processUpdateNote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
+        var param:A.UpdateNoteRequest = request.param as A.UpdateNoteRequest;
+        A.BoardManager.updateNote(this._board, param);
+        var response = new A.ApplicationResponse(request);
+        response.success(new A.UpdateNoteResponse(param.noteId, param.title, param.body));
+        this._emitApplicationResponse(request, response, ack);
+    }
+
+    private _processUpvote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
+        var param:A.VoteRequest = request.param as A.VoteRequest;
+        var response = new A.ApplicationResponse(request);
+        if(A.BoardManager.upvote(this._board, param) != null) {
+            response.success(new A.VoteResponse(param.noteId, param.voter));
+        } else {
+            response.fail();
+        }
+        this._emitApplicationResponse(request, response, ack);
+    }
+
+    private _processDownvote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
+        var param:A.VoteRequest = request.param as A.VoteRequest;
+        var response = new A.ApplicationResponse(request);
+        if(A.BoardManager.upvote(this._board, param) != null) {
+            response.success(new A.VoteResponse(param.noteId, param.voter));
+        } else {
+            response.fail();
+        }
+        this._emitApplicationResponse(request, response, ack);
+    }
+
+    private _onServerRequest(client:Socket.Socket, request:S.ServerRequest, ack:(response:S.ServerResponse)=>void = null):void {
+        if(request.topic == S.ServerTopic.Join) {
+            this._processJoinRoom(client, request, ack);
+        } else if(request.topic == S.ServerTopic.Host) {
+            this._processHostRoom(client, request, ack);
+        } else if(request.topic == S.ServerTopic.List) {
+            this._processGetRooms(client, request, ack);            
+        } else if(request.topic == S.ServerTopic.Leave) {
+            this._processLeaveRoom(client, request, ack);
+        }
+    }
+
+    private _getAllRooms():string[] {
+        var userRooms:string[] = [];
         var socketRooms = this._io.sockets.adapter.rooms;
         if(socketRooms) {
             for(var room in socketRooms) {
@@ -132,57 +157,109 @@ class ApiServer {
         return userRooms;
     }
 
+    private _roomOf(clientId:string):string {
+        for(var room in this._rooms) {
+            if(this._rooms.hasOwnProperty(room) && this._rooms[room].participants.indexOf(clientId) >= 0) {
+                return room;
+            }
+        }
+
+        throw new Error(clientId + ' clientId not registered properly in this._rooms');
+    }
+
     private _clone(o) {
         return JSON.parse(JSON.stringify(o));
     }
 
-    private _respondHostRoom(client:Socket.Socket, msg:any) {
-        var response:object = { result: false };
-        if(msg.request.room != '' && this._getAllRooms().indexOf(msg.request.room) < 0) {
-            // register host
-            client.join(msg.request.room);
-            var hostId = uuid();
-            this._hosts[msg.request.room] = hostId;
-            // prepare response
-            response = {
-                result : true,
-                id : hostId,
-                hostId : hostId,
-            }
+    private _emitServerResponse(room:string, response:S.ServerResponse, ack:(response:S.ServerResponse)=>void = null):void {
+        if(ack) ack(response);
+
+        if(response.result == true && room != null) {
+            // send event to everyone in the same room as the client who triggered the event
+            this._io.to(room).emit('server', response);
         }
-        return response;
     }
 
-    private _respondJoinRoom(client:Socket.Socket, msg:any) {
-        var response:object = { result: false };
-        if(msg.request.room != '' && this._getAllRooms().indexOf(msg.request.room) >= 0) {
+    private _emitApplicationResponse(request:A.ApplicationRequest, response:A.ApplicationResponse, ack:(response:A.ApplicationResponse)=>void = null):void {
+        if(ack) ack(response);
+        // send event to everyone in the same room as the client who triggered the event
+        if (response.result == true) {
+            this._io.to(this._roomOf(request.requester)).emit('application', response);
+        }
+    }
+
+    private _processHostRoom(client:Socket.Socket, request:S.ServerRequest, ack:(response:S.ServerResponse)=>void = null):void {
+        var response:S.ServerResponse = new S.ServerResponse(request);
+        var param:S.HostRequest = request.param as S.HostRequest;
+        if(param.room != '' && this._getAllRooms().indexOf(param.room) < 0) {
+            // register host
+            client.join(param.room);
+            var clientId = uuid();
+            if(!this._rooms.hasOwnProperty(param.room))
+                this._rooms[param.room] = new Room();
+            this._rooms[param.room].host = clientId;
+            this._rooms[param.room].participants.push(clientId);
+            // prepare response
+            response.succeed(new S.HostResponse(clientId, param.room));
+        } else {
+            response.fail();
+        }
+        
+        if(!request.requester) request.requester = clientId;
+        this._emitServerResponse(this._roomOf(clientId), response, ack);
+    }
+
+    private _processJoinRoom(client:Socket.Socket, request:S.ServerRequest, ack:(response:S.ServerResponse)=>void = null):void {
+        var response:S.ServerResponse = new S.ServerResponse(request);
+        var param:S.JoinRequest = request.param as S.JoinRequest;
+        if(param.room != '' && this._getAllRooms().indexOf(param.room) >= 0) {
             // register client
-            client.join(msg.request.room);
+            client.join(param.room);
             var clientId = uuid();
             // prepare response
-            response = {
-                result: true,
-                id: clientId,
-                hostId: this._hosts[msg.request.room],
-            }
+            response.succeed(new S.JoinResponse(request.requester, param.room));
+        } else {
+            response.fail();
         }
-        return response;
+        
+        if(!request.requester) request.requester = clientId;
+        this._emitServerResponse(this._roomOf(clientId), response, ack);
     }
 
-    private _respondGetRooms(client:Socket.Socket, msg:any) {
-        let response = {
-            result: true,
-            rooms: this._getAllRooms()
-        }
-        return response;
+    private _processGetRooms(client:Socket.Socket, request:S.ServerRequest, ack:(response:S.ServerResponse)=>void = null):void {
+        let response:S.ServerResponse = new S.ServerResponse(request);
+        response.succeed(new S.ListResponse(this._getAllRooms()));
+        
+        this._emitServerResponse(null, response, ack);
     }
 
-    private _respondLeaveRoom(client:Socket.Socket, msg:any) {
+    private _processLeaveRoom(client:Socket.Socket, request:S.ServerRequest, ack:(response:S.ServerResponse)=>void = null):void {
         // let response:object = { result: false } // will never happen
         // unregister client from room,
         // for simplicity, intentionally not checking whether client is in the room in the first place
-        client.leave(msg.request.room);
-        let response = { result: true }
+        var response = new S.ServerResponse(request);
+        var param:S.LeaveRequest = request.param as S.LeaveRequest;
+        var room = this._roomOf(param.leaver);
+        if(room) {
+            client.leave(room);
+            _.remove(this._rooms[room].participants, (participant) => {
+                return participant == param.leaver;
+            });
+
+            // make the first participant 
+            if(this._rooms[room].host == param.leaver) {
+                var newHost = _.first(this._rooms[room].participants);
+                if(newHost) {
+                    this._rooms[room].host = newHost;
+                    this._processHostRoom(client, new S.ServerRequest(request.requester, S.ServerTopic.Host, new S.HostRequest(newHost, room)));
+                }
+            }
+            response.succeed(new S.LeaveResponse(param.leaver, room));
+        } else {
+            response.fail();
+        }
+
+        this._emitServerResponse(this._roomOf(param.leaver), response, ack);
     }
 }
 
