@@ -6,20 +6,16 @@ import * as uuid from 'uuid';
 import * as A from './app/models/application.contract';
 import * as S from './app/models/server.contract';
 import * as _ from 'lodash';
-import { Result } from '../node_modules/@types/range-parser';
 
 
-class Room {
-    host:string;
-    participants:string[] = [];
-}
+
 
 class ApiServer {
     private _express:express.Application;
     private _io:Socket.Server;
     private _http;
     PORT = process.env.PORT || 8000;
-    private _rooms:{[key:string]:Room} = {};
+    private _rooms:{[key:string]:S.Room} = {};
 
     private _board:A.Board = new A.Board();
 
@@ -87,7 +83,7 @@ class ApiServer {
     }
 
     private _processAddNote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
-        var param:A.AddNoteRequest = request.param as A.AddNoteRequest;
+        var param:A.AddNoteRequestParam = request.param as A.AddNoteRequestParam;
         var note:A.Note = A.BoardManager.addNote(this._board, param);
         var response = new A.ApplicationResponse(request);
         response.success(note);
@@ -95,26 +91,26 @@ class ApiServer {
     }
 
     private _processDeleteNote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
-        var param:A.DeleteNoteRequest = request.param as A.DeleteNoteRequest;
+        var param:A.DeleteNoteRequestParam = request.param as A.DeleteNoteRequestParam;
         A.BoardManager.deleteNote(this._board, param);
         var response = new A.ApplicationResponse(request);
-        response.success(new A.DeleteNoteResponse(param.owner, param.noteId));
+        response.success(new A.DeleteNoteResponseParam(param.owner, param.noteId));
         this._emitApplicationResponse(request, response, ack);
     }
 
     private _processUpdateNote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
-        var param:A.UpdateNoteRequest = request.param as A.UpdateNoteRequest;
+        var param:A.UpdateNoteRequestParam = request.param as A.UpdateNoteRequestParam;
         A.BoardManager.updateNote(this._board, param);
         var response = new A.ApplicationResponse(request);
-        response.success(new A.UpdateNoteResponse(param.noteId, param.title, param.body));
+        response.success(new A.UpdateNoteResponseParam(param.noteId, param.title, param.body));
         this._emitApplicationResponse(request, response, ack);
     }
 
     private _processUpvote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
-        var param:A.VoteRequest = request.param as A.VoteRequest;
+        var param:A.VoteRequestParam = request.param as A.VoteRequestParam;
         var response = new A.ApplicationResponse(request);
         if(A.BoardManager.upvote(this._board, param) != null) {
-            response.success(new A.VoteResponse(param.noteId, param.voter));
+            response.success(new A.VoteResponseParam(param.noteId, param.voter));
         } else {
             response.fail();
         }
@@ -122,10 +118,10 @@ class ApiServer {
     }
 
     private _processDownvote(client:Socket.Socket, request:A.ApplicationRequest, ack:(response:any)=>void = null):void {
-        var param:A.VoteRequest = request.param as A.VoteRequest;
+        var param:A.VoteRequestParam = request.param as A.VoteRequestParam;
         var response = new A.ApplicationResponse(request);
         if(A.BoardManager.upvote(this._board, param) != null) {
-            response.success(new A.VoteResponse(param.noteId, param.voter));
+            response.success(new A.VoteResponseParam(param.noteId, param.voter));
         } else {
             response.fail();
         }
@@ -159,8 +155,13 @@ class ApiServer {
 
     private _roomOf(clientId:string):string {
         for(var room in this._rooms) {
-            if(this._rooms.hasOwnProperty(room) && this._rooms[room].participants.indexOf(clientId) >= 0) {
-                return room;
+            if(this._rooms.hasOwnProperty(room)) 
+            {
+                if(_.findIndex(this._rooms[room].participants, (p) => {
+                    return p.id == clientId;
+                }) >= 0) {
+                    return room;
+                }
             }
         }
 
@@ -190,17 +191,17 @@ class ApiServer {
 
     private _processHostRoom(client:Socket.Socket, request:S.ServerRequest, ack:(response:S.ServerResponse)=>void = null):void {
         var response:S.ServerResponse = new S.ServerResponse(request);
-        var param:S.HostRequest = request.param as S.HostRequest;
+        var param:S.HostRequestParam = request.param as S.HostRequestParam;
         if(param.room != '' && this._getAllRooms().indexOf(param.room) < 0) {
             // register host
             client.join(param.room);
             var clientId = uuid();
             if(!this._rooms.hasOwnProperty(param.room))
-                this._rooms[param.room] = new Room();
-            this._rooms[param.room].host = clientId;
-            this._rooms[param.room].participants.push(clientId);
+                this._rooms[param.room] = new S.Room();
+            this._rooms[param.room].host = param.participant.id = clientId;
+            this._rooms[param.room].participants.push(param.participant);
             // prepare response
-            response.succeed(new S.HostResponse(clientId, param.room));
+            response.succeed(new S.HostResponseParam(clientId, param.participant, param.room));
         } else {
             response.fail();
         }
@@ -211,13 +212,13 @@ class ApiServer {
 
     private _processJoinRoom(client:Socket.Socket, request:S.ServerRequest, ack:(response:S.ServerResponse)=>void = null):void {
         var response:S.ServerResponse = new S.ServerResponse(request);
-        var param:S.JoinRequest = request.param as S.JoinRequest;
+        var param:S.JoinRequestParam = request.param as S.JoinRequestParam;
         if(param.room != '' && this._getAllRooms().indexOf(param.room) >= 0) {
             // register client
             client.join(param.room);
             var clientId = uuid();
             // prepare response
-            response.succeed(new S.JoinResponse(request.requester, param.room));
+            response.succeed(new S.JoinResponseParam(request.requester, param.room));
         } else {
             response.fail();
         }
@@ -228,7 +229,7 @@ class ApiServer {
 
     private _processGetRooms(client:Socket.Socket, request:S.ServerRequest, ack:(response:S.ServerResponse)=>void = null):void {
         let response:S.ServerResponse = new S.ServerResponse(request);
-        response.succeed(new S.ListResponse(this._getAllRooms()));
+        response.succeed(new S.ListResponseParam(this._getAllRooms()));
         
         this._emitServerResponse(null, response, ack);
     }
@@ -238,23 +239,23 @@ class ApiServer {
         // unregister client from room,
         // for simplicity, intentionally not checking whether client is in the room in the first place
         var response = new S.ServerResponse(request);
-        var param:S.LeaveRequest = request.param as S.LeaveRequest;
+        var param:S.LeaveRequestParam = request.param as S.LeaveRequestParam;
         var room = this._roomOf(param.leaver);
         if(room) {
             client.leave(room);
             _.remove(this._rooms[room].participants, (participant) => {
-                return participant == param.leaver;
+                return participant.id == param.leaver;
             });
 
             // make the first participant 
             if(this._rooms[room].host == param.leaver) {
                 var newHost = _.first(this._rooms[room].participants);
                 if(newHost) {
-                    this._rooms[room].host = newHost;
-                    this._processHostRoom(client, new S.ServerRequest(request.requester, S.ServerTopic.Host, new S.HostRequest(newHost, room)));
+                    this._rooms[room].host = newHost.id;
+                    this._processHostRoom(client, new S.ServerRequest(request.requester, S.ServerTopic.Host, new S.HostRequestParam(newHost.id, newHost, room)));
                 }
             }
-            response.succeed(new S.LeaveResponse(param.leaver, room));
+            response.succeed(new S.LeaveResponseParam(param.leaver, room));
         } else {
             response.fail();
         }

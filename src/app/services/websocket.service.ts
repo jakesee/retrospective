@@ -28,16 +28,16 @@ export class WebsocketService {
     });
   }
 
-  public hostRoom(room:string, callback:(response:S.ServerResponse)=>void = null) {
+  public hostRoom(room:string, nickname:string, callback:(response:S.ServerResponse)=>void = null) {
     if(this.isHost()) {
       console.log('App socket is already hosting room:', this._room);
     } else {
       this._resetSessionInfo();
-      var request = new S.ServerRequest(this._id, S.ServerTopic.Host, new S.HostRequest(this._id, room));
+      var request = new S.ServerRequest(this._id, S.ServerTopic.Host, new S.HostRequestParam(this._id, new S.Participant(null, nickname), room));
       this._socket.emit('server', request, (response:S.ServerResponse) => {
         if(response.result == true) {
           console.log('host ok', response.param);
-          var param:S.HostResponse = response.param as S.HostResponse;
+          var param:S.HostResponseParam = response.param as S.HostResponseParam;
           this._id = param.hoster;
           this._room = param.room;
         }

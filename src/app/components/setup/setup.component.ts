@@ -39,7 +39,7 @@ export class SetupComponent implements OnInit {
 
   public host(room:string, nickname:string) {
     console.log(room, nickname);
-    this._ws.hostRoom(room, (response) => {
+    this._ws.hostRoom(room, nickname, (response) => {
       console.log(response);
       if(response.result) {
         //this._router.navigateByUrl('/start-stop-continue-board');
