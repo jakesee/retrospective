@@ -8,7 +8,7 @@ import { AppComponent } from './app.component';
 import { DataService } from './services/data.service';
 import { AboutComponent } from './components/about/about.component';
 import { HostComponent } from './components/host/host.component';
-import { ChatComponent } from './components/chat/chat.component';
+import { RoomComponent } from './components/room/room.component';
 import { SetupComponent } from './components/setup/setup.component'
 import { WebsocketService } from './services/websocket.service';
 
@@ -16,7 +16,7 @@ import { WebsocketService } from './services/websocket.service';
 const appRoutes:Routes = [
   { path: '', component:SetupComponent },
   { path: 'about', component:AboutComponent },
-  { path: 'chat', component:ChatComponent },
+  { path: 'room', component:RoomComponent },
 ]
 
 
@@ -25,7 +25,7 @@ const appRoutes:Routes = [
     AppComponent,
     AboutComponent,
     HostComponent,
-    ChatComponent,
+    RoomComponent,
     SetupComponent
   ],
   imports: [ // modules

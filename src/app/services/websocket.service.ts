@@ -10,13 +10,16 @@ import * as S from '../models/server.contract';
 export class WebsocketService {
 
   private _socket;
-  private _id:string;
   private _room:string;
   private _isHost:boolean = false;
-  private _nickname:string = 'Anonymous';
+  public me:A.Participant = null;
+  public participants:A.Participant[] = [];
 
   constructor() {
     this._socket = io();
+    this.getServerMessages().subscribe((response:S.ServerResponse)=> {
+      this._onServerResponse(response);
+    });
     if(!this._socket.status) console.log('constructor', 'error connecting to socket');
   }
 
@@ -33,13 +36,13 @@ export class WebsocketService {
       console.log('App socket is already hosting room:', this._room);
     } else {
       this._resetSessionInfo();
-      var request = new S.ServerRequest(this._id, S.ServerTopic.Host, new S.HostRequestParam(this._id, new S.Participant(null, nickname), room));
+      var request = new S.ServerRequest(null, S.ServerTopic.Host, new A.HostRequestParam(room, nickname, "black", new A.Participant(null, null, null)));
       this._socket.emit('server', request, (response:S.ServerResponse) => {
         if(response.result == true) {
           console.log('host ok', response.param);
           var param:S.HostResponseParam = response.param as S.HostResponseParam;
-          this._id = param.hoster;
-          this._room = param.room;
+          this.me = param.participant as A.Participant;
+          this.participants.push(this.me);
         }
         // handover to UI component
         if(callback) callback(response);
@@ -53,25 +56,21 @@ export class WebsocketService {
 
   private _resetSessionInfo() {
     this._isHost = false;
-    this._id = null;
+    this.me = null;
     this._room = null;
   }
 
-  public joinRoom(room:string, callback:(response:S.ServerResponse)=>void = null) {
-    this._socket.emit('server', {
-      type: 'join',
-      request: {
-        room: room
+  public joinRoom(room:string, nickname:string, callback:(response:S.ServerResponse)=>void = null) {
+    var request = new S.ServerRequest(null, S.ServerTopic.Join, new A.JoinRequestParam(room, nickname, "black"));
+
+    this._socket.emit('server', request, (response:S.ServerResponse) => {
+      console.log('join ok', response.param);
+      if(response.result) {
+        var param:S.JoinResponseParam = response.param as S.JoinResponseParam;
+        this.me = param.participant as A.Participant;
+        this.participants = param.room.participants as A.Participant[];
       }
-    }, (msg) => {
-      // record the registration info if successful
-      if(msg.response.result) {
-        this._isHost = false;
-        this._id = msg.response.id;
-        this._room = msg.response.room;
-      }
-      // then inform component callback
-      if(callback) callback(msg);
+      if(callback) callback(response);
     });
   }
 
@@ -100,5 +99,15 @@ export class WebsocketService {
 
   public sendMessage(message:any) {
     this._socket.emit('application', message);
+  }
+
+  private _onServerResponse(response:S.ServerResponse) {
+    if(!response.result) return;
+    if(response.topic == S.ServerTopic.Join) {
+      var param:S.JoinResponseParam = response.param as S.JoinResponseParam;
+      if(param.participant.id != this.me.id) {
+        this.participants.push(param.participant as A.Participant);
+      }
+    }
   }
 }

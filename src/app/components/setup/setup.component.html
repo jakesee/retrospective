@@ -1,10 +1,32 @@
-<h1>Enter Room</h1>
-<form (submit)="join(iRoom.value)">
-  <div><label for="nickname">Nickname</label> <input type="text" #nickname></div>
-  <div><label for="room">Room</label> <input type="text" #room></div>
+<div class="tab-control">
+  <nav>
+    <ul>
+      <li [ngClass]="isHostVisible ? 'active' : ''"><a (click)="showHostTab()">Host</a></li>
+      <li [ngClass]="!isHostVisible ? 'active' : ''"><a (click)="showJoinTab()">Join</a></li>
+    </ul>
+  </nav>
 
-  <ul>
-    <li><button (click)="join(room.value, nickname.value)">Join</button></li>
-    <li><button (click)="host(room.value, nickname.value)">Host</button></li>
-  </ul>
-</form>
+  <div *ngIf="isHostVisible" class="form-container">
+    <h1>Create Room</h1>
+    <form (submit)="join(iRoom.value)">
+      <div><label for="nickname">Nickname</label></div>
+      <div><input type="text" #nickname></div>
+      <div><label for="room">Room</label></div>
+      <div><input type="text" #room></div>
+
+      <button id="btn-host" (click)="host(room.value, nickname.value)">Host</button>
+    </form>
+  </div>
+
+  <div *ngIf="!isHostVisible" class="form-container">
+      <h1>Join Room</h1>
+      <form (submit)="join(iRoom.value)">
+        <div><label for="nickname">Nickname</label></div>
+        <div><input type="text" #nickname></div>
+        <div><label for="room">Room</label></div>
+        <div><input type="text" #room></div>
+  
+        <button id="btn-join" (click)="join(room.value, nickname.value)">Join</button>
+      </form>
+    </div>
+</div>

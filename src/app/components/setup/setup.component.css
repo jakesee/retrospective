@@ -1,26 +1,77 @@
-form div {
+div.tab-control {
+    color: #595959;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+div.tab-control nav ul {
+    width: 100%;
+}
+div.tab-control nav ul li {
+    list-style-type: none;
+    display: inline-block;
+    width: 100px;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 6px 9px;
+    border: 1px solid #00374E;
+    background-color: #DFDFDF;
+    position: relative;
+    top: 1px;
+    margin-right: 1px;
+}
+div.tab-control nav ul li a {
+    display: inline-block;
+    width: 100%;
+    cursor: pointer;
+}
+div.tab-control nav ul li.active {
+    background-color: white;
+    border-bottom: 1px solid white;
+}
+
+div.form-container {
+    border: 1px solid #00374E;
+    padding: 20px 30px;
+    margin: 0 auto;
+    background-color: white;
+}
+
+div.form-container form div {
     margin: 0 0 5px 0;
 }
-form label {
-    display: inline-block;
+
+div.form-container h1 {
+    text-align: center;
+}
+
+div.form-container form input[type=text] {
+    outline: 0;
     padding: 3px 6px;
-    margin: 0 5px 0 0;
+    border: 0px;
+    border-bottom: 1px solid  #595959;
+    width: 100%;
+    font-size: 1em;
+}
+
+div.form-container form input[type=text]:focus {
+    border-bottom: 1px solid  #F08800;
+}
+
+div.form-container form button {
+    margin: 20px auto;
+    padding: 5px 12px;
+    color: white;
+    text-transform: uppercase;
+    border: 0;
+    font-size: 1.2em;
     width: 100px;
+    border-radius: 5px;
 }
-form input  {
-    padding: 3px 6px;
+
+div.form-container form button#btn-join {
+    background-color: #E91E63;
 }
-form ul {
-    display: block;
-    margin-top: 10px;
-}
-form ul li {
-    display: inline-block;
-    list-style-type: none;
-    text-align: right;
-}
-form button {
-    margin: 0 5px 0 5px;
-    padding: 3px 6px;
-    min-width: 80px;
+div.form-container form button#btn-host {
+    background-color: #019588;
 }

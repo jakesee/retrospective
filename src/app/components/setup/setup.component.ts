@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { WebsocketService } from '../../services/websocket.service';
 import { Router } from '@angular/router';
-import * as S from '../../models/server.contract';
 import * as A from '../../models/application.contract';
 
 @Component({
@@ -11,6 +10,7 @@ import * as A from '../../models/application.contract';
 })
 export class SetupComponent implements OnInit {
 
+  public isHostVisible = false;
   public availableRooms:[string];
 
   constructor(private _ws:WebsocketService, private _router:Router) {
@@ -23,26 +23,35 @@ export class SetupComponent implements OnInit {
     });
   }
 
+  public showHostTab() {
+    this.isHostVisible = true;
+  }
+
+  public showJoinTab() {
+    this.isHostVisible = false;
+  }
+
   private _onApplicationMessages(response:A.ApplicationResponse) {
     console.log('_onApplicationMessages', response);
   }
 
   public join(room:string, nickname:string) {
-    this._ws.joinRoom(room, (response) => {
+    console.log('join', room.toLowerCase(), nickname);
+    this._ws.joinRoom(room, nickname, (response) => {
       console.log(response);
       if(response.result) {
-        //this._router.navigateByUrl('/start-stop-continue-board');
+        this._router.navigateByUrl('/room');
       }
     });
     return false;
   }
 
   public host(room:string, nickname:string) {
-    console.log(room, nickname);
+    console.log('host', room.toLowerCase(), nickname);
     this._ws.hostRoom(room, nickname, (response) => {
       console.log(response);
       if(response.result) {
-        //this._router.navigateByUrl('/start-stop-continue-board');
+        this._router.navigateByUrl('/room');
       }
     });
     return false;
