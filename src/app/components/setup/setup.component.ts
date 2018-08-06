@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { WebsocketService } from '../../services/websocket.service';
 import { Router } from '@angular/router';
-import * as A from '../../models/application.contract';
+import * as S from '../../models/server.contract';
 
 @Component({
   selector: 'app-setup',
@@ -18,8 +18,8 @@ export class SetupComponent implements OnInit {
   }
 
   ngOnInit() {
-    this._ws.getApplicationMessages().subscribe((response) => {
-      this._onApplicationMessages(response);
+    this._ws.getMessages().subscribe((response) => {
+      this._onMessages(response);
     });
   }
 
@@ -31,8 +31,8 @@ export class SetupComponent implements OnInit {
     this.isHostVisible = false;
   }
 
-  private _onApplicationMessages(response:A.ApplicationResponse) {
-    console.log('_onApplicationMessages', response);
+  private _onMessages(response:S.Response) {
+    console.log('_onMessages', response);
   }
 
   public join(room:string, nickname:string) {
