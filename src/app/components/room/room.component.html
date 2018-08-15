@@ -1,6 +1,12 @@
-<h1>I am {{_ws.me.nickname}}, id: {{_ws.me.id}}</h1>
-<p>RoomId {{ _ws.room.name }} {{ _ws.room.roomId }}</p>
-<h1>Start of conversation</h1>
-<ul id="conversation" *ngFor="let p of _ws.participants">
-  <li>xx {{p.nickname}}</li>
-</ul>
+<div>
+  <ul id="conversation" *ngFor="let p of _ws.participants">
+    <li>xx {{p.nickname}}</li>
+  </ul>
+</div>
+
+<div>
+  <h1>I am {{_ws.me.nickname}}, id: {{_ws.me.id}}</h1>
+  <p>RoomId {{ getRoom().name }} {{ _ws.room.roomId }}</p>
+  <h1>Start of conversation</h1>
+</div>
+

@@ -1,8 +1,8 @@
 <div class="tab-control">
   <nav>
     <ul>
-      <li [ngClass]="isHostVisible ? 'active' : ''"><a (click)="showHostTab()">Host</a></li>
-      <li [ngClass]="!isHostVisible ? 'active' : ''"><a (click)="showJoinTab()">Join</a></li>
+      <li [ngClass]="isHostVisible ? 'active' : ''"><a id="btnHost" (click)="showHostTab()">Host</a></li>
+      <li [ngClass]="!isHostVisible ? 'active' : ''"><a id="btnJoin" (click)="showJoinTab()">Join</a></li>
     </ul>
   </nav>
 

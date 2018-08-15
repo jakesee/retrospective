@@ -27,4 +27,8 @@ export class RoomComponent implements OnInit {
     }
   }
 
+  public getRoom() {
+    return this._ws.room;
+  }
+
 }
